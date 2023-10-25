@@ -346,7 +346,7 @@ color: rgb(25, 25, 25);</string>
         </property>
         <property name="styleSheet">
          <string notr="true">font: 12pt &quot;Segoe MDL2 Assets&quot;;
-background-color: rgb(241, 241, 241);
+background-color: rgb(250, 70, 20);
 color: rgb(25, 25, 25);</string>
         </property>
         <property name="text">
@@ -364,7 +364,7 @@ color: rgb(25, 25, 25);</string>
         </property>
         <property name="styleSheet">
          <string notr="true">font: 12pt &quot;Segoe MDL2 Assets&quot;;
-background-color: rgb(241, 241, 241);
+background-color: rgb(250, 70, 20);
 color: rgb(25, 25, 25);</string>
         </property>
         <property name="text">
@@ -382,7 +382,7 @@ color: rgb(25, 25, 25);</string>
         </property>
         <property name="styleSheet">
          <string notr="true">font: 12pt &quot;Segoe MDL2 Assets&quot;;
-background-color: rgb(241, 241, 241);
+background-color: rgb(0, 33, 165);
 color: rgb(25, 25, 25);</string>
         </property>
         <property name="text">
@@ -400,7 +400,7 @@ color: rgb(25, 25, 25);</string>
         </property>
         <property name="styleSheet">
          <string notr="true">font: 12pt &quot;Segoe MDL2 Assets&quot;;
-background-color: rgb(241, 241, 241);
+background-color: rgb(0, 33, 165);
 color: rgb(25, 25, 25);</string>
         </property>
         <property name="text">
@@ -411,7 +411,15 @@ color: rgb(25, 25, 25);</string>
      </layout>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="errorLayout"/>
+     <layout class="QVBoxLayout" name="errorLayout">
+      <item>
+       <widget class="QLabel" name="errorLabel">
+        <property name="text">
+         <string>Passwords do not match!</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>

@@ -1,4 +1,4 @@
-# save path, errors, editable browser
+# save path, errors, editable browser, add files breaks when empty
 
 import sys
 from PyQt5 import QtWidgets, QtGui
@@ -14,6 +14,8 @@ class MainWindowUI(QMainWindow):
         super(MainWindowUI, self).__init__()
 
         loadUi("Encryption-Decryption.ui", self)
+
+        self.errorLabel.hide()
 
 
     # Handles opening the directory for file selection
@@ -52,6 +54,7 @@ def functions():
     reconnectReset(ui.clearFilesListButton.clicked, clearFilesListFunction)
     reconnectReset(ui.passwordBox.textChanged, updatePassword)
     reconnectReset(ui.confirmPasswordBox.textChanged, verifyPassword)
+    reconnectReset(ui.filesPathBox.textChanged, pathBoxUpdate)
 
 
 # Swaps function reference for buttons and connects a reference to resetFunction
@@ -88,13 +91,26 @@ def restFunction():
     functions()    
 
 
+# Handles updates to the paths list box
+def pathBoxUpdate():
+    if addingFiles[0] == "False":
+        txt = ui.filesPathBox.toPlainText()
+        lines = txt.split("\n")
+        filesList.clear()
+        for i in lines:
+            if i != "":
+                filesList.append(i)
+
+
 # Adds the selected file to the files list
 def addToFilesFunction():
     if files[0] != "":
+        addingFiles[0] = "True"
         filesList.append(files[0])
         ui.filesPathBox.clear()
         for path in filesList:
             ui.filesPathBox.insertPlainText(path + "\n")
+    addingFiles[0] = "False"
 
 
 # Clears the file lists
@@ -122,14 +138,10 @@ def raiseError():
     except:
         pass
     if passwordMatchError[0] != "":
-        ui.errorLabel = QLabel('Passwords do not match!')
-        ui.errorLayout.addWidget(ui.errorLabel)
+        ui.errorLabel.show()
     else:
         passwordMatchError[0] = ""
-        try:
-            ui.errorLayout.removeWidget(ui.errorLabel)
-        except:
-            pass
+        ui.errorLabel.hide()
 
 
 # Gets file name and sends it to the proper encryption place
@@ -140,6 +152,7 @@ def encryptFile():
 
         # Checks if a file has actually been selected
         if files != []:
+            addingFiles[0] = "True"
 
             enc = encryptor(generate_key(password[0]))
 
@@ -152,6 +165,15 @@ def encryptFile():
                 enc.encrypt_file(files[0])
                 files[0] += ".enc"
                 ui.selectedFileLabel.setText(files[0])
+                fcount = 0
+                for f in filesList:
+                    if f == files[0][:-4]:
+                        filesList[fcount] = files[0]
+                        ui.filesPathBox.clear()
+                        for path in filesList:
+                            ui.filesPathBox.insertPlainText(path + "\n")
+                    fcount += 1
+            addingFiles[0] = "False"
     else:
         passwordMatchError[0] = "Error"
         raiseError()
@@ -167,6 +189,7 @@ def decryptFile():
 
         # Checks if a file has actually been selected
         if files != []:
+            addingFiles[0] = "True"
 
             enc = encryptor(generate_key(password[0]))
 
@@ -179,6 +202,15 @@ def decryptFile():
                 enc.decrypt_file(files[0])
                 files[0] = files[0][:-4]
                 ui.selectedFileLabel.setText(files[0])
+                fcount = 0
+                for f in filesList:
+                    if f == files[0] + ".enc":
+                        filesList[fcount] = files[0]
+                        ui.filesPathBox.clear()
+                        for path in filesList:
+                            ui.filesPathBox.insertPlainText(path + "\n")
+                    fcount += 1
+            addingFiles[0] = "False"
     else:
         passwordMatchError[0] = "Error"
         raiseError()
@@ -194,6 +226,7 @@ def encryptAllFile():
 
         # Checks if any file have actually been selected
         if filesList != []:
+            addingFiles[0] = "True"
 
             enc = encryptor(generate_key(password[0]))
 
@@ -209,9 +242,15 @@ def encryptAllFile():
                     enc.encrypt_file(file)
                     filesList[fileCount] += ".enc"
                 fileCount += 1
+
+            # Updating values of displayed paths
             ui.filesPathBox.clear()
             for path in filesList:
                 ui.filesPathBox.insertPlainText(path + "\n")
+            files[0] += ".enc"
+            ui.selectedFileLabel.setText(files[0])
+
+            addingFiles[0] = "False"
     else:
         passwordMatchError[0] = "Error"
         raiseError()
@@ -227,6 +266,7 @@ def decryptAllFile():
 
         # Checks if any file have actually been selected
         if filesList != []:
+            addingFiles[0] = "True"
 
             enc = encryptor(generate_key(password[0]))
 
@@ -242,9 +282,15 @@ def decryptAllFile():
                     enc.decrypt_file(file)
                     filesList[fileCount] = file[:-4]
                 fileCount += 1
+
+            # Updating values of displayed paths
             ui.filesPathBox.clear()
             for path in filesList:
                 ui.filesPathBox.insertPlainText(path + "\n")
+            files[0] = files[0][:-4]
+            ui.selectedFileLabel.setText(files[0])
+
+            addingFiles[0] = "False"
     else:
         passwordMatchError[0] = "Error"
         raiseError()
