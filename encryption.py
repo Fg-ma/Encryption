@@ -19,16 +19,28 @@ class encryptor:
 
 
     def encrypt_file(self, file_name):
-
+        
         with open(file_name, 'rb') as fo:
             plaintext = fo.read()
 
         ciphertext, tag, cipher = self.encrypt(plaintext)
 
-        with open(file_name + ".enc", 'wb') as fo:
-            [fo.write(x) for x in (cipher.nonce, tag, ciphertext)]
-            fo.close()
-        os.remove(file_name)
+        if savePath == []:
+            with open(file_name + ".enc", 'wb') as fo:
+                [fo.write(x) for x in (cipher.nonce, tag, ciphertext)]
+                fo.close()
+            os.remove(file_name)
+        elif savePath != []:
+            lastSlash = [pos for pos, char in enumerate(file_name) if char == "/"]
+            print(file_name[lastSlash[-1]:])
+            newPath = savePath[0] + "/" + file_name[lastSlash[-1]:]
+            print(newPath)
+
+            with open(newPath + ".enc", 'wb') as fo:
+                [fo.write(x) for x in (cipher.nonce, tag, ciphertext)]
+                fo.close()
+            os.remove(file_name)
+
 
 
     def decrypt(self, ciphertext, nonce, tag):
