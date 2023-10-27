@@ -1,5 +1,3 @@
-# save path, folders, editable browsers
-
 import sys
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QLineEdit
@@ -21,6 +19,7 @@ class MainWindowUI(QMainWindow):
 
     # Handles opening the directory for file selection
     def browseFiles(self):
+        addingFiles[0] = "True"
         dialog = QtWidgets.QFileDialog.getOpenFileNames(self)
         if len(dialog[0]) > 1:
             files.clear()
@@ -39,14 +38,17 @@ class MainWindowUI(QMainWindow):
                 self.selectedFileBox.insertPlainText(dialog[0][0])
             except:
                 pass
+        addingFiles[0] = "False"
 
     
     # Handles opening the directory for savepath
     def savePath(self):
+        addingFiles[0] = "True"
         savePath.clear()
         savePath.append(QFileDialog.getExistingDirectory(self, "Select Directory", "C:\\"))
         self.savePathBox.clear()
         self.savePathBox.insertPlainText(savePath[0])
+        addingFiles[0] = "False"
 
 
 # Connects the buttons to the appropriate functions given the under the present condition
@@ -64,6 +66,8 @@ def functions():
     reconnectReset(ui.filesPathBox.textChanged, pathBoxUpdate)
     reconnectReset(ui.unmaskPasswordButton.clicked, unmaskPassword)
     reconnectReset(ui.unmaskConfirmPasswordButton.clicked, unmaskConfirmPassword)
+    reconnectReset(ui.selectedFileBox.textChanged, selectedFileBoxUpdate)
+    reconnectReset(ui.savePathBox.textChanged, savePathBoxUpdate)
 
 
 # Swaps function reference for buttons and connects a reference to resetFunction
@@ -99,6 +103,26 @@ def reconnect(signal, newhandler=None, oldhandler=None):
 def restFunction():
     functions()    
 
+
+# Handles updates to the selcted files paths box
+def selectedFileBoxUpdate():
+    if addingFiles[0] == "False":
+        txt = ui.selectedFileBox.toPlainText()
+        lines = txt.split("\n")
+        files.clear()
+        for i in lines:
+            if i != "":
+                files.append(i)
+
+
+# Handles updates to the save paths box
+def savePathBoxUpdate():
+    if addingFiles[0] == "False":
+        txt = ui.savePathBox.toPlainText()
+        savePath.clear()
+        savePath.append(txt)
+        print(savePath)
+        
 
 # Handles updates to the paths list box
 def pathBoxUpdate():
@@ -200,43 +224,53 @@ def encryptFile():
 
         # Checks if a file has actually been selected
         if files != []:
+            # Variable rest
+            fileCount = 0
+            failedPaths.clear()
+            blankFiles.clear()
+            for file in files:
+                blankFiles.append(file)
+            blankFilesList.clear()
+            for file in filesList:
+                blankFilesList.append(file)
+
             addingFiles[0] = "True"
 
             enc = encryptor(generate_key(password[0]))
 
-            fileCount = 0
-            failedPaths.clear()
             # Iterates over all of the selected files
             for file in files:
-                # Differentiates between files and folders inputted and handles them differently
-                if file[-1] == "\\":
-                    folder = os.scandir(file)
-
-                    for f in folder:
-                        try:
-                            enc.encrypt_file(f)
-                        except:
-                            failedPaths.append(f)
-                else:
+                # Trys to ecrypt a single file path if that doesn't work it trys to encrypt a folder path
+                # if all that doesn't work it throws an error
+                try:
+                    enc.encrypt_file(file)
+                except:
                     try:
-                        enc.encrypt_file(file)
-                        files[fileCount] += ".enc"
+                        enclosedFileNames = [entry.path for entry in os.scandir(file) if entry.is_file()]
+
+                        for item in enclosedFileNames:
+                            try:
+                                enc.encrypt_file(item)
+                            except:
+                                failedPaths.append(item)
                     except:
                         failedPaths.append(file)
                 fileCount += 1
+
+            # Files values rest
+            files.clear()
+            for file in blankFiles:
+                files.append(file)
+            filesList.clear()
+            for file in blankFilesList:
+                filesList.append(file)
 
             ui.selectedFileBox.clear()
             for i in files:
                 ui.selectedFileBox.insertPlainText(i + "\n")
 
-            # Updates fileslist incase the encrypted files were in it
+            # Updates fileslist in case the encrypted files were in it
             if filesList != []:
-                for i in files:
-                    fcount = 0
-                    for j in filesList:
-                        if j == i[:-4]:
-                            filesList[fcount] = i
-                        fcount += 1
                 ui.filesPathBox.clear()
                 for path in filesList:
                     ui.filesPathBox.insertPlainText(path + "\n")
@@ -256,30 +290,46 @@ def decryptFile():
 
         # Checks if a file has actually been selected
         if files != []:
+            # Variable rest
+            fileCount = 0
+            failedPaths.clear()
+            blankFiles.clear()
+            for file in files:
+                blankFiles.append(file)
+            blankFilesList.clear()
+            for file in filesList:
+                blankFilesList.append(file)
+
             addingFiles[0] = "True"
 
             enc = encryptor(generate_key(password[0]))
 
-            fileCount = 0
-            failedPaths.clear()
             # Iterates over all of the selected files
             for file in files:
-                # Differentiates between files and folders inputted and handles them differently
-                if file[-1] == "\\":
-                    folder = os.scandir(file)
-
-                    for f in folder:
-                        try:
-                            enc.decrypt_file(f)
-                        except:
-                            failedPaths.append(f)
-                else:
+                # Trys to ecrypt a single file path if that doesn't work it trys to encrypt a folder path
+                # if all that doesn't work it throws an error
+                try:
+                    enc.decrypt_file(file)
+                except:
                     try:
-                        enc.decrypt_file(file)
-                        files[fileCount] = file[:-4]
+                        enclosedFileNames = [entry.path for entry in os.scandir(file) if entry.is_file()]
+
+                        for item in enclosedFileNames:
+                            try:
+                                enc.decrypt_file(item)
+                            except:
+                                failedPaths.append(item)
                     except:
                         failedPaths.append(file)
                 fileCount += 1
+
+            # Files values rest
+            files.clear()
+            for file in blankFiles:
+                files.append(file)
+            filesList.clear()
+            for file in blankFilesList:
+                filesList.append(file)
 
             ui.selectedFileBox.clear()
             for i in files:
@@ -287,12 +337,6 @@ def decryptFile():
 
             # Updates fileslist incase the encrypted files were in it
             if filesList != []:
-                for i in files:
-                    fcount = 0
-                    for j in filesList:
-                        if j == i + ".enc":
-                            filesList[fcount] = i
-                        fcount += 1
                 ui.filesPathBox.clear()
                 for path in filesList:
                     ui.filesPathBox.insertPlainText(path + "\n")
@@ -312,6 +356,16 @@ def encryptAllFile():
 
         # Checks if any file have actually been selected
         if filesList != []:
+            # Variable rest
+            fileCount = 0
+            failedPaths.clear()
+            blankFiles.clear()
+            for file in files:
+                blankFiles.append(file)
+            blankFilesList.clear()
+            for file in filesList:
+                blankFilesList.append(file)
+
             addingFiles[0] = "True"
 
             enc = encryptor(generate_key(password[0]))
@@ -320,37 +374,37 @@ def encryptAllFile():
             failedPaths.clear()
             # Iterates over all of the selected files
             for file in filesList:
-                # Differentiates between files and folders inputted and handles them differently
-                if file[-1] == "\\":
-                    folder = os.scandir(file)
-
-                    for f in folder:
-                        try:
-                            enc.encrypt_file(f)
-                        except:
-                            failedPaths.append(f)
-                else:
+                # Trys to ecrypt a single file path if that doesn't work it trys to encrypt a folder path
+                # if all that doesn't work it throws an error
+                try:
+                    enc.encrypt_file(file)
+                except:
                     try:
-                        enc.encrypt_file(file)
-                        filesList[fileCount] += ".enc"
+                        enclosedFileNames = [entry.path for entry in os.scandir(file) if entry.is_file()]
+
+                        for item in enclosedFileNames:
+                            try:
+                                enc.encrypt_file(item)
+                            except:
+                                failedPaths.append(item)
                     except:
                         failedPaths.append(file)
                 fileCount += 1
+
+            # Files values rest
+            files.clear()
+            for file in blankFiles:
+                files.append(file)
+            filesList.clear()
+            for file in blankFilesList:
+                filesList.append(file)
 
             # Updating values of displayed paths
             ui.filesPathBox.clear()
             for path in filesList:
                 ui.filesPathBox.insertPlainText(path + "\n")
-
-            # Updates files in case any of the changed files were in the files list
+            
             if files != []:
-                for j in filesList:
-                    fcount = 0
-                    for i in files:
-                        if j == i + ".enc":
-                            files[fcount] = j
-                        fcount += 1
-
                 ui.selectedFileBox.clear()
                 for i in files:
                     ui.selectedFileBox.insertPlainText(i + "\n")
@@ -371,6 +425,16 @@ def decryptAllFile():
 
         # Checks if any file have actually been selected
         if filesList != []:
+            # Variable rest
+            fileCount = 0
+            failedPaths.clear()
+            blankFiles.clear()
+            for file in files:
+                blankFiles.append(file)
+            blankFilesList.clear()
+            for file in filesList:
+                blankFilesList.append(file)
+
             addingFiles[0] = "True"
 
             enc = encryptor(generate_key(password[0]))
@@ -379,37 +443,37 @@ def decryptAllFile():
             failedPaths.clear()
             # Iterates over all of the selected files
             for file in filesList:
-                # Differentiates between files and folders inputted and handles them differently
-                if file[-1] == "\\":
-                    folder = os.scandir(file)
-
-                    for f in folder:
-                        try:
-                            enc.decrypt_file(f)
-                        except:
-                            failedPaths.append(f)
-                else:
+                # Trys to ecrypt a single file path if that doesn't work it trys to encrypt a folder path
+                # if all that doesn't work it throws an error
+                try:
+                    enc.decrypt_file(file)
+                except:
                     try:
-                        enc.decrypt_file(file)
-                        filesList[fileCount] = file[:-4]
+                        enclosedFileNames = [entry.path for entry in os.scandir(file) if entry.is_file()]
+
+                        for item in enclosedFileNames:
+                            try:
+                                enc.decrypt_file(item)
+                            except:
+                                failedPaths.append(item)
                     except:
                         failedPaths.append(file)
                 fileCount += 1
+
+            # Files values rest
+            files.clear()
+            for file in blankFiles:
+                files.append(file)
+            filesList.clear()
+            for file in blankFilesList:
+                filesList.append(file)
 
             # Updating values of displayed paths
             ui.filesPathBox.clear()
             for path in filesList:
                 ui.filesPathBox.insertPlainText(path + "\n")
 
-            # Updates files in case any of the changed files were in the files list
-            if files != []:
-                for j in filesList:
-                    fcount = 0
-                    for i in files:
-                        if j == i[:-4]:
-                            files[fcount] = j
-                        fcount += 1
-                
+            if files != []:   
                 ui.selectedFileBox.clear()
                 for i in files:
                     ui.selectedFileBox.insertPlainText(i + "\n")

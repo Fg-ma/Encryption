@@ -19,28 +19,54 @@ class encryptor:
 
 
     def encrypt_file(self, file_name):
-        
         with open(file_name, 'rb') as fo:
             plaintext = fo.read()
 
         ciphertext, tag, cipher = self.encrypt(plaintext)
 
         if savePath == []:
+            # Creates new file and removes the old one
             with open(file_name + ".enc", 'wb') as fo:
                 [fo.write(x) for x in (cipher.nonce, tag, ciphertext)]
                 fo.close()
             os.remove(file_name)
-        elif savePath != []:
-            lastSlash = [pos for pos, char in enumerate(file_name) if char == "/"]
-            print(file_name[lastSlash[-1]:])
-            newPath = savePath[0] + "/" + file_name[lastSlash[-1]:]
-            print(newPath)
 
-            with open(newPath + ".enc", 'wb') as fo:
+            # Updates the files array
+            count = 0
+            for i in files:
+                if file_name == i:
+                    blankFiles[count] = file_name + ".enc"
+                count += 1
+
+            # Updates the filesList array
+            count = 0
+            for i in filesList:
+                if file_name == i:
+                    blankFilesList[count] = file_name + ".enc"
+                count += 1
+        elif savePath != []:
+            lastSlash = [pos for pos, char in enumerate(file_name) if char == "/" or char == "\\"]
+            newPath = savePath[0] + "/" + file_name[lastSlash[-1] + 1:]
+            newPath += ".enc"
+
+            with open(newPath, 'wb') as fo:
                 [fo.write(x) for x in (cipher.nonce, tag, ciphertext)]
                 fo.close()
             os.remove(file_name)
 
+            # Updates the files arrays
+            count = 0
+            for i in files:
+                if file_name == i:
+                     blankFiles[count] = newPath
+                count += 1
+
+            # Updates the filesList array
+            count = 0
+            for i in filesList:
+                if file_name == i:
+                    blankFilesList[count] = newPath
+                count += 1
 
 
     def decrypt(self, ciphertext, nonce, tag):
@@ -54,19 +80,58 @@ class encryptor:
             print("Key incorrect or message corrupted")
 
 
-    def decrypt_file(self, file_name):
-
+    def decrypt_file(self, file_name):   
         with open(file_name, 'rb') as fo:
             nonce, tag, ciphertext = [fo.read(x) for x in (16, 16, -1)]
+        
         dec = self.decrypt(ciphertext, nonce, tag)
 
         if (dec == None):
             exit()
 
-        os.rename(file_name, file_name[:-4])
-        with open(file_name[:-4], 'wb') as fo:
-            fo.write(dec)
-            fo.close()
+        if savePath == []:
+            # Creates a new file and removes the old one
+            with open(file_name[:-4], 'wb') as fo:
+                fo.write(dec)
+                fo.close()
+            os.remove(file_name)
+
+            # Updates the files arrays
+            count = 0
+            for i in files:
+                if file_name == i:
+                     blankFiles[count] = file_name[:-4]
+                count += 1
+
+            # Updates the filesList array
+            count = 0
+            for i in filesList:
+                if file_name == i:
+                    blankFilesList[count] = file_name[:-4]
+                count += 1
+        elif savePath != []:
+            lastSlash = [pos for pos, char in enumerate(file_name) if char == "/" or char == "\\"]
+            newPath = savePath[0] + "/" + file_name[lastSlash[-1] + 1:]
+            newPath = newPath[:-4]
+
+            with open(newPath, 'wb') as fo:
+                fo.write(dec)
+                fo.close()
+            os.remove(file_name)
+
+            # Updates the files arrays
+            count = 0
+            for i in files:
+                if file_name == i:
+                     blankFiles[count] = newPath
+                count += 1
+
+            # Updates the filesList array
+            count = 0
+            for i in filesList:
+                if file_name == i:
+                    blankFilesList[count] = newPath
+                count += 1
 
 
 def generate_key(password):
