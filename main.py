@@ -1,3 +1,11 @@
+"""
+Turns non-encrypted files that are inputted into encrypted files using AES standard encryption.
+Turns encrypted files taht are inputted into non-encrypted files using AES standard decryption.
+Can handle save paths that designate where files are saved after encryption.
+Can handle batch encryption via folders or multiple file inputs.
+Requires a password(do not forget it, there is no recovery method).
+"""
+
 import sys
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QLineEdit
@@ -7,8 +15,12 @@ from PyQt5.uic import loadUi
 from encryption import *
 from vars import *
 
-# Program mainwindow
 class MainWindowUI(QMainWindow): 
+
+    """
+    Sets up the UI by loading it in from the .ui file.
+    """
+
     def __init__(self):
         super(MainWindowUI, self).__init__()
 
@@ -17,44 +29,58 @@ class MainWindowUI(QMainWindow):
         self.errorLabel.hide()
 
 
-    # Handles opening the directory for file selection
-    def browseFiles(self):
-        addingFiles[0] = "True"
-        dialog = QtWidgets.QFileDialog.getOpenFileNames(self)
-        if len(dialog[0]) > 1:
+def browseFiles():
+
+    """
+    Opens a file browser window and stores the selected file path in the file path selection box.
+    Can not selected folder, but paths can be later edited in the file selction box to accomdidate folders.
+    """
+
+    addingFiles[0] = "True"
+    dialog = QtWidgets.QFileDialog.getOpenFileNames(ui)
+    if len(dialog[0]) > 1:
+        files.clear()
+
+        for i in dialog[0]:
+            files.append(i)
+
+        ui.selectedFileBox.clear()
+        for i in files:
+            ui.selectedFileBox.insertPlainText(i + "\n")
+    else:
+        try:
             files.clear()
-
-            for i in dialog[0]:
-                files.append(i)
-
+            files.append(dialog[0][0])
             ui.selectedFileBox.clear()
-            for i in files:
-                ui.selectedFileBox.insertPlainText(i + "\n")
-        else:
-            try:
-                files.clear()
-                files.append(dialog[0][0])
-                ui.selectedFileBox.clear()
-                self.selectedFileBox.insertPlainText(dialog[0][0])
-            except:
-                pass
-        addingFiles[0] = "False"
+            ui.selectedFileBox.insertPlainText(dialog[0][0])
+        except:
+            pass
+    addingFiles[0] = "False"
 
     
-    # Handles opening the directory for savepath
-    def savePath(self):
-        addingFiles[0] = "True"
-        savePath.clear()
-        savePath.append(QFileDialog.getExistingDirectory(self, "Select Directory", "C:\\"))
-        self.savePathBox.clear()
-        self.savePathBox.insertPlainText(savePath[0])
-        addingFiles[0] = "False"
+def browseSavePath():
+
+    """
+    Opens a folder browser window and stores the selected folder path in the save path selection box.
+    Can only select folders.
+    """
+
+    addingFiles[0] = "True"
+    savePath.clear()
+    savePath.append(QFileDialog.getExistingDirectory(ui, "Select Directory", "C:\\"))
+    ui.savePathBox.clear()
+    ui.savePathBox.insertPlainText(savePath[0])
+    addingFiles[0] = "False"
 
 
-# Connects the buttons to the appropriate functions given the under the present condition
 def functions():
-    reconnectReset(ui.browseButton.clicked, ui.browseFiles)
-    reconnectReset(ui.savePathButton.clicked, ui.savePath)
+
+    """
+    Used to reconnect the appropriate buttons with the appropriate functions.
+    """
+
+    reconnectReset(ui.browseButton.clicked, browseFiles)
+    reconnectReset(ui.savePathButton.clicked, browseSavePath)
     reconnectReset(ui.encryptButton.clicked, encryptFile)
     reconnectReset(ui.decryptButton.clicked, decryptFile)
     reconnectReset(ui.encryptAllButton.clicked, encryptAllFile)
@@ -70,8 +96,13 @@ def functions():
     reconnectReset(ui.savePathBox.textChanged, savePathBoxUpdate)
 
 
-# Swaps function reference for buttons and connects a reference to resetFunction
-def reconnectReset(signal, newhandler=None, oldhandler=None):        
+def reconnectReset(signal, newhandler=None, oldhandler=None): 
+
+    """
+    Trys to disconnect the inputted signal(button) from any functions that it may be attached to,
+    then trys to reconnect the signal to a new function if inputted.
+    """     
+
     try:
         if oldhandler is not None:
             while True:
@@ -85,8 +116,13 @@ def reconnectReset(signal, newhandler=None, oldhandler=None):
         signal.connect(restFunction)
 
 
-# Swaps function reference for buttons
-def reconnect(signal, newhandler=None, oldhandler=None):        
+def reconnect(signal, newhandler=None, oldhandler=None):
+
+    """
+    Trys to disconnect the inputted signal(button) from any functions that it may be attached to,
+    then trys to reconnect the signal to a new function if inputted.
+    """     
+
     try:
         if oldhandler is not None:
             while True:
@@ -99,13 +135,21 @@ def reconnect(signal, newhandler=None, oldhandler=None):
         signal.connect(newhandler)
 
 
-# Updates what functions are called when swapping from base functions to alpha to 2nd
 def restFunction():
+
+    """
+    Redirects to the functions function in order to re-establish the functions that each button is connected to
+    """
+
     functions()    
 
 
-# Handles updates to the selcted files paths box
 def selectedFileBoxUpdate():
+
+    """
+    Updates the relevant variables when updates are detected in the selectedFileBox
+    """
+
     if addingFiles[0] == "False":
         txt = ui.selectedFileBox.toPlainText()
         lines = txt.split("\n")
@@ -115,17 +159,22 @@ def selectedFileBoxUpdate():
                 files.append(i)
 
 
-# Handles updates to the save paths box
 def savePathBoxUpdate():
+
+    """
+    Updates the relevant variables when updates are detected in the savePathBox
+    """
     if addingFiles[0] == "False":
         txt = ui.savePathBox.toPlainText()
         savePath.clear()
         savePath.append(txt)
-        print(savePath)
         
 
-# Handles updates to the paths list box
 def pathBoxUpdate():
+
+    """
+    Updates the relevant variables when updates are detected in the filesPathBox
+    """
     if addingFiles[0] == "False":
         txt = ui.filesPathBox.toPlainText()
         lines = txt.split("\n")
@@ -135,8 +184,11 @@ def pathBoxUpdate():
                 filesList.append(i)
 
 
-# Adds the selected file to the files list
 def addToFilesFunction():
+
+    """
+    Taskes the value(s) from the selected file box and adds it to the filesPathBox as an entry(s) to the list of files
+    """
     if files != []:
         addingFiles[0] = "True"
         for i in files:
@@ -147,8 +199,12 @@ def addToFilesFunction():
     addingFiles[0] = "False"
 
 
-# Clears the file lists
 def clearFilesListFunction():
+
+    """
+    Empties the filesPathBox and filesList to clear the list of files
+    """
+
     if filesList != []:
         addingFiles[0] == "True"
         filesList.clear()
@@ -156,20 +212,32 @@ def clearFilesListFunction():
     addingFiles[0] == "False"
 
 
-# Updates password when user types in box
 def updatePassword():
+
+    """
+    Updates the relevant variables when updates are detected in the passwordBox
+    """
+
     password[0] = ui.passwordBox.text()
     raiseError()
 
 
-# Updates comfirm password when user types in box
 def verifyPassword():
+
+    """
+    Updates the relevant variables when updates are detected in the passwordBox
+    """
+
     confirmPassword[0] = ui.confirmPasswordBox.text()
     raiseError()
 
 
-# unmasks and remask password on button click for privacy
 def unmaskPassword():
+
+    """
+    Handles hiding an unhiding the inputted password in the passwordBox
+    """
+
     if passwordMode[0] == "Password":
         passwordMode[0] = "Normal"
         ui.passwordBox.setEchoMode(QLineEdit.EchoMode.Normal)
@@ -180,8 +248,12 @@ def unmaskPassword():
         ui.unmaskPasswordButton.setIcon(QIcon("resources\\unhidden.png"))
 
 
-# unmasks and remask confirm password on button click for privacy
 def unmaskConfirmPassword():
+
+    """
+    Handles hiding an unhiding the inputted confirmation password in the confirmPasswordBox
+    """
+
     if confirmPasswordMode[0] == "Password":
         confirmPasswordMode[0] = "Normal"
         ui.confirmPasswordBox.setEchoMode(QLineEdit.EchoMode.Normal)
@@ -192,8 +264,13 @@ def unmaskConfirmPassword():
         ui.unmaskConfirmPasswordButton.setIcon(QIcon("resources\\unhidden.png"))
 
 
-# Handles raising all errors
 def raiseError():
+
+    """
+    Raises and handles such as unfound paths and mismatched passwords,
+    Outputs the errors in a label that is added the the bottom of the window.
+    """
+
     if passwordMatchError[0] != "":
         ui.errorLabel.setText("Mismatched passwords!")
         ui.errorLabel.adjustSize()
@@ -216,8 +293,14 @@ def raiseError():
         ui.errorLabel.hide()
 
 
-# Gets file name and sends it to the proper encryption place
 def encryptFile():
+
+    """
+    Gets the appropriate files and folders then unpacks folders into files,
+    then inputs are sent to be encrypted in encryption.py.
+    Finally updates how the files are displayed and stored to match the new files that have been created.
+    """
+
     # Password match check
     if password[0] == confirmPassword[0] and password[0] != "":
         passwordMatchError[0] = ""
@@ -282,8 +365,14 @@ def encryptFile():
     raiseError()
 
 
-# Gets file name and sends it to the proper decryption place
 def decryptFile():
+
+    """
+    Gets the appropriate files and folders then unpacks folders into files,
+    then inputs are sent to be decrypted in encryption.py.
+    Finally updates how the files are displayed and stored to match the new files that have been created.
+    """
+
     # Password match check
     if password[0] == confirmPassword[0] and password[0] != "":
         passwordMatchError[0] = ""
@@ -348,8 +437,14 @@ def decryptFile():
     raiseError()
 
 
-# Gets all file names and sends them to the proper encryption place
 def encryptAllFile():
+
+    """
+    Gets the appropriate files and folders store in filesList then unpacks folders into files,
+    then inputs are sent to be encrypted in encryption.py.
+    Finally updates how the files are displayed and stored to match the new files that have been created.
+    """
+
     # Password match check
     if password[0] == confirmPassword[0] and password[0] != "":
         passwordMatchError[0] = ""
@@ -417,8 +512,14 @@ def encryptAllFile():
     raiseError()
 
 
-# Gets all file names and sends them to the proper decryption place
 def decryptAllFile():
+
+    """
+    Gets the appropriate files and folders in filesList then unpacks folders into files,
+    then inputs are sent to be encrypted in decryption.py.
+    Finally updates how the files are displayed and stored to match the new files that have been created.
+    """
+
     # Password match check
     if password[0] == confirmPassword[0] and password[0] != "":
         passwordMatchError[0] = ""
