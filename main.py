@@ -116,25 +116,6 @@ def reconnectReset(signal, newhandler=None, oldhandler=None):
         signal.connect(restFunction)
 
 
-def reconnect(signal, newhandler=None, oldhandler=None):
-
-    """
-    Trys to disconnect the inputted signal(button) from any functions that it may be attached to,
-    then trys to reconnect the signal to a new function if inputted.
-    """     
-
-    try:
-        if oldhandler is not None:
-            while True:
-                signal.disconnect(oldhandler)
-        else:
-            signal.disconnect()
-    except TypeError:
-        pass
-    if newhandler is not None:
-        signal.connect(newhandler)
-
-
 def restFunction():
 
     """
